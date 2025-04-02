@@ -16,6 +16,8 @@ const Login = ({ navigation }) => {
     const handleLogin = () => {
         console.log("Logging in with:", email, password);
         // Here, you would add authentication logic.
+
+        navigation.navigate("Home");
     };
 
     return (
