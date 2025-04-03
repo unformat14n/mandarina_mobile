@@ -1,20 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import { NavigationContainer } from "@react-navigation/native";
-import { createStackNavigator } from "@react-navigation/stack";
-import Login from "./screens/Login";
-import Register from "./screens/Register";
-import Home from "./screens/Home";
-
-const Stack = createStackNavigator();
+import AuthNavigator from "./navigation/AuthNavigator";
+import MainNavigator from "./navigation/AppNavigator";
+import { ThemeProvider } from "./context/ThemeContext";
 
 export default function App() {
-  return (
-    <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
-        <Stack.Screen name="Login" component={Login} />
-        <Stack.Screen name="Register" component={Register} />
-        <Stack.Screen name="Home" component={Home} />
-      </Stack.Navigator>
-    </NavigationContainer>
-  );
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+    return (
+        <ThemeProvider>
+            <NavigationContainer>
+                {isLoggedIn ? (
+                    <MainNavigator />
+                ) : (
+                    <AuthNavigator setIsLoggedIn={setIsLoggedIn} />
+                )}
+            </NavigationContainer>
+        </ThemeProvider>
+    );
 }

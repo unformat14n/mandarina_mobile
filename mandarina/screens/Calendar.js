@@ -8,15 +8,18 @@ import {
     ScrollView,
 } from "react-native";
 import colors from "../styles/colors";
+import { useTheme } from "../context/ThemeContext";
 
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
-const daySize = screenWidth / 7;
+const daySize = screenWidth / 7 - 1;
 const rowHeight = (screenHeight * 0.8) / 5;
 
 function Calendar() {
     const [curDate, setCurDate] = useState(new Date());
     const [view, setView] = useState("month");
+    const { theme, palette } = useTheme();
+    const styles = getStyles(theme, palette);
 
     // Function to go to the previous month
     const handleNext = () => {
@@ -94,9 +97,11 @@ function Calendar() {
 
             days.push(
                 <View
-                    key={day}
+                    key={`day-${day}`}
                     style={[isToday ? styles.today : {}, styles.day]}>
-                    <Text style={[isToday ? styles.todayDate : {}]}>{day}</Text>
+                    <Text style={[isToday ? styles.todayDate : styles.text]}>
+                        {day}
+                    </Text>
                 </View>
             );
         }
@@ -112,8 +117,12 @@ function Calendar() {
 
         const today = new Date();
         const weekDays = [
-            <View style={styles.weekdaysHdr}>
-                <Text style={{ textAlign: "center", fontWeight: "bold" }}>
+            <View style={styles.weekdaysHdr} key="hour-header">
+                <Text
+                    style={[
+                        { textAlign: "center", fontWeight: "bold" },
+                        styles.text,
+                    ]}>
                     Hour
                 </Text>
             </View>,
@@ -126,15 +135,21 @@ function Calendar() {
                 month === today.getMonth() &&
                 year === today.getFullYear();
             weekDays.push(
-                <View style={styles.weekdaysHdr} key={day.getDate()}>
-                    <Text style={{ textAlign: "center", fontWeight: "bold" }}>
+                <View
+                    style={styles.weekdaysHdr}
+                    key={`day-header-${day.getTime()}`}>
+                    <Text
+                        style={[
+                            { textAlign: "center", fontWeight: "bold" },
+                            styles.text,
+                        ]}>
                         {day.toLocaleDateString("default", {
                             weekday: "short",
                         })}
                     </Text>
                     <Text
                         style={[
-                            isToday ? styles.weekToday : {},
+                            isToday ? styles.weekToday : styles.text,
                             { textAlign: "center", fontWeight: "bold" },
                         ]}>
                         {day.toLocaleString("default", {
@@ -174,7 +189,7 @@ function Calendar() {
                 day.setDate(startOfWeek.getDate() + i); // Move forward day by day
                 weekDays.push(
                     <View
-                        key={`day-${day}-${hour}`}
+                        key={`day-${day.getTime()}-hour-${hour}`}
                         style={styles.weekday}></View>
                 );
             }
@@ -235,17 +250,19 @@ function Calendar() {
                 </View>
 
                 <View style={styles.headerInfo}>
-                    <TouchableOpacity style={styles.btn} onPress={(e) => setToday()}>
+                    <TouchableOpacity
+                        style={styles.btn}
+                        onPress={(e) => setToday()}>
                         <Text style={styles.buttonText}>Today</Text>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={(e) => setView("month")}>
-                        <Text>Month</Text>
+                        <Text style={styles.text}>Month</Text>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={(e) => setView("week")}>
-                        <Text>Week</Text>
+                        <Text style={styles.text}>Week</Text>
                     </TouchableOpacity>
                     <TouchableOpacity onPress={(e) => setView("day")}>
-                        <Text>Day</Text>
+                        <Text style={styles.text}>Day</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={styles.btn}>
                         <Text style={styles.buttonText}>Add Event</Text>
@@ -256,7 +273,9 @@ function Calendar() {
                     {view == "month" &&
                         ["SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"].map(
                             (day, index) => (
-                                <Text key={index} style={styles.daysHdr}>
+                                <Text
+                                    key={index}
+                                    style={[styles.daysHdr, styles.text]}>
                                     {day}
                                 </Text>
                             )
@@ -284,128 +303,132 @@ function Calendar() {
     );
 }
 
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: "#fff",
-    },
-    header: {
-        borderBottomWidth: 1,
-        borderBottomColor: "#ccc",
-        height: screenHeight * 0.15,
-        boxShadow: "0 2px 10px rgba(0, 0, 0, 0.3)",
-    },
-    headerInfo: {
-        flexDirection: "row",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginHorizontal: 20,
-        marginTop: 10,
-    },
-    headerText: {
-        fontSize: 24,
-        color: colors.secondary,
-        fontWeight: "bold",
-    },
-    btn: {
-        backgroundColor: colors.primary,
-        padding: 10,
-        borderRadius: 5,
-    },
-    buttonText: {
-        color: colors.background,
-        fontSize: 18,
-        fontWeight: "bold",
-    },
-    calendarHdr: {
-        flexDirection: "row",
-        justifyContent: "space-around",
-        marginTop: "auto",
-        marginBottom: 4,
-    },
-    daysHdr: {
-        fontSize: 16,
-        fontWeight: "bold",
-        textAlign: "center",
-        width: daySize,
-    },
-    scrollView: {
-        height: "100%",
-    },
-    calendar: {
-        flex: 1,
-        flexDirection: "row",
-        flexWrap: "wrap",
-        marginTop: 10,
-    },
-    emptyDay: {
-        width: daySize,
-        height: rowHeight,
-    },
-    day: {
-        width: daySize,
-        minHeight: rowHeight,
-        alignItems: "center",
-    },
-    today: {
-        borderWidth: 2,
-        borderColor: colors.primary,
-        borderRadius: 5,
-    },
-    todayDate: {
-        fontWeight: "bold",
-        color: colors.background,
-        backgroundColor: colors.primary,
-        padding: 5,
-        margin: 5,
-        borderRadius: 5,
-    },
-    weekdaysHdr: {
-        fontSize: 16,
-        fontWeight: "bold",
-        textAlign: "center",
-        width: (screenWidth - 5) / 8,
-    },
-    hourTxt: {
-        fontSize: 12,
-        paddingLeft: 5,
-        color: colors.secondaryBg,
-    },
-    weekday: {
-        width: (screenWidth - 5) / 8,
-        minHeight: 50,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.secondaryBg,
-        height: "auto",
-        // alignItems: "center",
-        // justifyContent: "center",
-    },
-    weekToday: {
-        fontWeight: "bold",
-        color: colors.background,
-        backgroundColor: colors.primary,
-        borderRadius: 5,
-        textAlign: "center",
-    },
+const getStyles = (curTheme, palette) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: colors[curTheme].background,
+        },
+        text: {
+            color: colors[curTheme].text,
+        },
+        header: {
+            borderBottomWidth: 1,
+            borderBottomColor: "#ccc",
+            height: screenHeight * 0.15,
+            boxShadow: "0 2px 10px rgba(0, 0, 0, 0.3)",
+        },
+        headerInfo: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginHorizontal: 20,
+            marginTop: 10,
+        },
+        headerText: {
+            fontSize: 24,
+            color: colors[palette].secondary,
+            fontWeight: "bold",
+        },
+        btn: {
+            backgroundColor: colors[palette].primary,
+            padding: 10,
+            borderRadius: 5,
+        },
+        buttonText: {
+            color: colors[curTheme].background,
+            fontSize: 18,
+            fontWeight: "bold",
+        },
+        calendarHdr: {
+            flexDirection: "row",
+            justifyContent: "space-around",
+            marginTop: "auto",
+            marginBottom: 4,
+        },
+        daysHdr: {
+            fontSize: 16,
+            fontWeight: "bold",
+            textAlign: "center",
+            width: daySize,
+        },
+        scrollView: {
+            height: "100%",
+        },
+        calendar: {
+            flex: 1,
+            flexDirection: "row",
+            flexWrap: "wrap",
+            marginTop: 10,
+        },
+        emptyDay: {
+            width: daySize,
+            height: rowHeight,
+        },
+        day: {
+            width: daySize,
+            minHeight: rowHeight,
+            alignItems: "center",
+        },
+        today: {
+            borderWidth: 2,
+            borderColor: colors[palette].primary,
+            borderRadius: 5,
+        },
+        todayDate: {
+            fontWeight: "bold",
+            color: colors[curTheme].background,
+            backgroundColor: colors[palette].primary,
+            padding: 5,
+            margin: 5,
+            borderRadius: 5,
+        },
+        weekdaysHdr: {
+            fontSize: 16,
+            fontWeight: "bold",
+            textAlign: "center",
+            width: (screenWidth - 5) / 8,
+        },
+        hourTxt: {
+            fontSize: 12,
+            paddingLeft: 5,
+            color: colors[curTheme].secondaryTxt,
+        },
+        weekday: {
+            width: (screenWidth - 5) / 8,
+            minHeight: 50,
+            borderBottomWidth: 1,
+            borderBottomColor: colors[curTheme].secondaryBg,
+            height: "auto",
+            // alignItems: "center",
+            // justifyContent: "center",
+        },
+        weekToday: {
+            fontWeight: "bold",
+            color: colors[curTheme].background,
+            backgroundColor: colors[palette].primary,
+            borderRadius: 5,
+            textAlign: "center",
+        },
 
-    dayCalendar: {
-        flex: 1,
-        flexDirection: "column",
-        marginTop: 10,
-    },
+        dayCalendar: {
+            flex: 1,
+            flexDirection: "column",
+            marginTop: 10,
+        },
 
-    dayHour: {
-        minHeight: 50,
-        borderBottomWidth: 1,
-        borderBottomColor: colors.secondaryBg,
-    },
+        dayHour: {
+            minHeight: 50,
+            borderBottomWidth: 1,
+            borderBottomColor: colors[curTheme].secondaryBg,
+        },
 
-    dayHdr: {
-        fontSize: 20,
-        color: colors.secondary,
-        fontWeight: "bold",
-        textAlign: "center",
-    },
-});
+        dayHdr: {
+            fontSize: 20,
+            color: colors[palette].secondary,
+            fontWeight: "bold",
+            textAlign: "center",
+        },
+    });
 
 export default Calendar;

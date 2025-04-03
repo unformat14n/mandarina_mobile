@@ -8,8 +8,12 @@ import {
     Image,
 } from "react-native";
 import colors from "../styles/colors";
+import { useTheme } from "../context/ThemeContext";
 
-const Login = ({ navigation }) => {
+const Login = ({ setIsLoggedIn }) => {
+    const { theme, palette } = useTheme();
+    const styles = getStyles(theme, palette);
+
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
@@ -17,7 +21,7 @@ const Login = ({ navigation }) => {
         console.log("Logging in with:", email, password);
         // Here, you would add authentication logic.
 
-        navigation.navigate("Home");
+        setIsLoggedIn(true);
     };
 
     return (
@@ -48,25 +52,25 @@ const Login = ({ navigation }) => {
     );
 };
 
-const styles = StyleSheet.create({
+const getStyles = (curTheme, palette) => StyleSheet.create({
     container: { flex: 1, justifyContent: "center", alignItems: "center" },
-    title: { fontSize: 24, fontWeight: "bold", marginBottom: 20, color: colors.secondary },
+    title: { fontSize: 24, fontWeight: "bold", marginBottom: 20, color: colors[palette].secondary },
     input: {
         width: "80%",
         padding: 10,
         borderWidth: 1,
         marginBottom: 10,
         borderRadius: 5,
-        backgroundColor: colors.background
+        backgroundColor: colors[curTheme].background
     },
     text: {
-        color: colors.text,
+        color: colors[curTheme].text,
         fontSize: 16,
         marginBottom: 10,
     },
-    button: { backgroundColor: colors.primary, padding: 10, borderRadius: 7 },
+    button: { backgroundColor: colors[palette].primary, padding: 10, borderRadius: 7 },
     buttonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
-    link: { marginTop: 10, color: colors.secondary },
+    link: { marginTop: 10, color: colors[curTheme].secondary },
     logo: {
         width: 100,
         height: 100,
