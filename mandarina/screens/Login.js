@@ -1,81 +1,143 @@
+// src/screens/LoginScreen.js
 import React, { useState } from "react";
 import {
     View,
-    Text,
     TextInput,
     TouchableOpacity,
+    Alert,
     StyleSheet,
+    Text,
     Image,
 } from "react-native";
+import { authService } from "../services/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import colors from "../styles/colors";
 import { useTheme } from "../context/ThemeContext";
 
 const Login = ({ setIsLoggedIn }) => {
+    const [email, setEmail] = useState("test@example.com"); // Pre-fill for testing
+    const [password, setPassword] = useState("password123"); // Pre-fill for testing
+    const [loading, setLoading] = useState(false);
     const { theme, palette } = useTheme();
     const styles = getStyles(theme, palette);
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const handleLogin = async () => {
+        setLoading(true);
 
-    const handleLogin = () => {
-        console.log("Logging in with:", email, password);
-        // Here, you would add authentication logic.
+        try {
+            const response = await authService.login(email, password);
+            console.log("Login response:", response);
 
-        setIsLoggedIn(true);
+            if (response.success) {
+                await AsyncStorage.setItem("userToken", response.token);
+                await AsyncStorage.setItem("userId", response.id.toString());
+                setIsLoggedIn(true);
+            } else {
+                Alert.alert(
+                    "Login Failed",
+                    response.message || "Unknown error"
+                );
+            }
+        } catch (error) {
+            // console.error("Login error:", error);
+            Alert.alert(
+                "Login Error",
+                error.response?.data?.message ||
+                    error.message ||
+                    "Failed to connect to server"
+            );
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (
         <View style={styles.container}>
             <Image source={require("../assets/logo.png")} style={styles.logo} />
-            <Text style={styles.title}>Login</Text>
+            <Text style={styles.title}>Welcome to Mandarina!</Text>
+            <Text style={styles.text}>Glad to have you here! Please enter your information:</Text>
             <TextInput
-                style={styles.input}
                 placeholder="Email"
                 value={email}
                 onChangeText={setEmail}
+                style={styles.input}
+                autoCapitalize="none"
                 keyboardType="email-address"
             />
             <TextInput
-                style={styles.input}
                 placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
+                style={styles.input}
             />
-            <TouchableOpacity style={styles.button} onPress={handleLogin}>
-                <Text style={styles.buttonText}>Login</Text>
+            <TouchableOpacity
+                style={styles.button}
+                onPress={handleLogin}
+                disabled={loading}>
+                <Text style={styles.buttonText}>
+                    {loading ? "Loading..." : "Login"}
+                </Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => navigation.navigate("Register")}>
-                <Text style={styles.link}>Don't have an account? Register</Text>
-            </TouchableOpacity>
+            <Text style={styles.link}>
+                Don't have an account? Try the Register bottom tab!
+            </Text>
         </View>
     );
 };
 
-const getStyles = (curTheme, palette) => StyleSheet.create({
-    container: { flex: 1, justifyContent: "center", alignItems: "center" },
-    title: { fontSize: 24, fontWeight: "bold", marginBottom: 20, color: colors[palette].secondary },
-    input: {
-        width: "80%",
-        padding: 10,
-        borderWidth: 1,
-        marginBottom: 10,
-        borderRadius: 5,
-        backgroundColor: colors[curTheme].background
-    },
-    text: {
-        color: colors[curTheme].text,
-        fontSize: 16,
-        marginBottom: 10,
-    },
-    button: { backgroundColor: colors[palette].primary, padding: 10, borderRadius: 7 },
-    buttonText: { color: "#fff", fontSize: 16, fontWeight: "bold" },
-    link: { marginTop: 10, color: colors[curTheme].secondary },
-    logo: {
-        width: 100,
-        height: 100,
-        marginBottom: 20,
-    },
-});
+const getStyles = (theme, palette) =>
+    StyleSheet.create({
+        container: {
+            flex: 1,
+            justifyContent: "center",
+            padding: 20,
+            alignItems: "center",
+        },
+        title: {
+            fontSize: 32,
+            fontWeight: "bold",
+            marginBottom: 20,
+            textAlign: "center",
+            color: colors[palette].primary,
+        },
+        input: {
+            width: "100%",
+            height: 50,
+            borderColor: colors[theme].text,
+            borderWidth: 1,
+            marginBottom: 15,
+            padding: 15,
+            borderRadius: 8,
+            backgroundColor: colors[theme].background,
+        },
+        text: {
+            marginBlock: 5,
+            color: colors[theme].text,
+        },
+        link: {
+            marginTop: 20,
+            color: colors[palette].secondary,
+            textAlign: "center",
+            textDecorationLine: "underline",
+        },
+        button: {
+            backgroundColor: colors[palette].primary,
+            padding: 15,
+            borderRadius: 8,
+            width: "50%",
+            alignItems: "center",
+            marginTop: 20,
+        },
+        buttonText: {
+            color: colors[theme].background,
+            fontWeight: "bold",
+        },
+        logo: {
+            width: 150,
+            height: 150,
+            marginBottom: 20,
+        },
+    });
 
 export default Login;
