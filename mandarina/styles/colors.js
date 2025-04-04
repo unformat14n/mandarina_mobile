@@ -20,21 +20,31 @@ export default {
     mandarina: {
         primary: "#FFAC5E",
         secondary: "#2f9e70",
+        altPrimary: "#ff875c",
+        altSecondary: "#3c908a",
     },
     peach: {
         primary: "#f599a6",
         secondary: "#9ab0a7",
+        altPrimary: "#d5586a",
+        altSecondary: "#5ca185",
     },
     coffee: {
-        primary: "#74512D",
-        secondary: "#AF8F6F",
+        primary: "#91736c",
+        secondary: "#be9e7b",
+        altPrimary: "#6d5651",
+        altSecondary: "#8f775c",
     },
     olive: {
         primary: "#5F6F52",
         secondary: "#A27B5C",
+        altPrimary: "#284034",
+        altSecondary: "#654d39",
     },
     blueberry: {
         primary: "#826fd7",
         secondary: "#4ea771",
+        altPrimary: "#482dc1",
+        altSecondary: "#425f50",
     },
 };

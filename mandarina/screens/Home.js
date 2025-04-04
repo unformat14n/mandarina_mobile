@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import Calendar from "./Calendar";
 import SettingsTab from "./SettingsTab";
 import Dashboard from "./Dashboard";
+import TaskList from "./TaskList";
 import colors from "../styles/colors";
 import { useTheme } from "../context/ThemeContext";
 
@@ -23,21 +24,9 @@ function Home() {
         <View style={styles.container}>
             <View style={styles.content}>
                 {state === "calendar" && <Calendar />}
-                {state === "tasks" && (
-                    <View>
-                        <Text>Tasks info should be here :)</Text>
-                    </View>
-                )}
-                {state === "dashboard" && (
-                    <View>
-                        <Dashboard />
-                    </View>
-                )}
-                {state === "settings" && (
-                    <View>
-                        <SettingsTab />
-                    </View>
-                )}
+                {state === "tasks" && <TaskList />}
+                {state === "dashboard" && <Dashboard />}
+                {state === "settings" && <SettingsTab />}
             </View>
             <View style={styles.navBar}>
                 <TouchableOpacity
