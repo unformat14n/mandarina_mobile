@@ -51,3 +51,66 @@ export const authService = {
     },
     // ... other methods
 };
+
+export const taskService = {
+    getTasks: async (userId) => {
+        try {
+            const response = await api.post("/get-tasks", { userId });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: "Failed to fetch tasks" };
+        }
+    },
+
+    createTask: async (taskData) => {
+        try {
+            const response = await api.post("/create-task", taskData);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: "Failed to create task" };
+        }
+    },
+
+    updateTask: async (taskData) => {
+        try {
+            const response = await api.post("/update-task", taskData);
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: "Failed to update task" };
+        }
+    },
+
+    updateTaskStatus: async (taskId, status) => {
+        try {
+            const response = await api.post("/update-status", {
+                taskId,
+                status,
+            });
+            return response.data;
+        } catch (error) {
+            throw (
+                error.response?.data || { message: "Failed to update status" }
+            );
+        }
+    },
+
+    deleteTask: async (taskId) => {
+        try {
+            const response = await api.post("/delete-task", { taskId });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: "Failed to delete task" };
+        }
+    },
+};
+
+export const userService = {
+    getUser: async (userId) => {
+        try {
+            const response = await api.post("/request-user", { userId });
+            return response.data;
+        } catch (error) {
+            throw error.response?.data || { message: "Failed to fetch user" };
+        }
+    },
+};

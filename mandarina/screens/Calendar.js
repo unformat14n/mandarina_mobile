@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
     View,
     Text,
@@ -9,6 +9,9 @@ import {
 } from "react-native";
 import colors from "../styles/colors";
 import { useTheme } from "../context/ThemeContext";
+import { useUser } from "../context/UserContext";
+import { taskService } from "../services/api";
+import Task from "../components/Task";
 
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
@@ -20,8 +23,9 @@ function Calendar() {
     const [view, setView] = useState("month");
     const { theme, palette } = useTheme();
     const styles = getStyles(theme, palette);
+    const { userId } = useUser();
+    const [tasks, setTasks] = useState([]);
 
-    // Function to go to the previous month
     const handleNext = () => {
         if (view == "month") {
             setCurDate((prevDate) => {
@@ -73,6 +77,24 @@ function Calendar() {
         setCurDate(new Date());
     };
 
+    const getTasks = async () => {
+        try {
+            const response = await taskService.getTasks(userId);
+
+            if (response.success) {
+                setTasks(response.tasks);
+            } else {
+                console.error("Error fetching tasks:", response.message);
+            }
+        } catch (error) {
+            console.error("Error fetching tasks:", error);
+        }
+    };
+
+    useEffect(() => {
+        getTasks();
+    }, [tasks]);
+
     const getDaysInMonth = (year, month) => {
         return new Date(year, month + 1, 0).getDate();
     };
@@ -95,6 +117,31 @@ function Calendar() {
                 month === today.getMonth() &&
                 year === today.getFullYear();
 
+            let dayTasks = tasks.filter((task) => {
+                const taskDate = new Date(task.dueDate);
+                return (
+                    taskDate.getDate() === day &&
+                    taskDate.getMonth() === month &&
+                    taskDate.getFullYear() === year
+                );
+            });
+            // console.log(dayTasks);
+
+            const taskComps = dayTasks.map((task) => (
+                <Task
+                    key={task.id}
+                    id={task.id}
+                    title={task.title}
+                    date={task.dueDate}
+                    hour={`${task.hour}:${String(task.minute).padStart(
+                        2,
+                        "0"
+                    )}`}
+                    priority={task.priority}
+                    status={task.status}
+                />
+            ));
+
             days.push(
                 <View
                     key={`day-${day}`}
@@ -102,6 +149,7 @@ function Calendar() {
                     <Text style={[isToday ? styles.todayDate : styles.text]}>
                         {day}
                     </Text>
+                    {taskComps}
                 </View>
             );
         }
@@ -187,10 +235,38 @@ function Calendar() {
             for (let i = 0; i < 7; i++) {
                 const day = new Date(startOfWeek.getTime()); // Create a new instance for each day
                 day.setDate(startOfWeek.getDate() + i); // Move forward day by day
+
+                let dayTasks = tasks.filter((task) => {
+                    const taskDate = new Date(task.dueDate);
+                    return (
+                        taskDate.getDate() === day.getDate() &&
+                        taskDate.getMonth() === day.getMonth() &&
+                        taskDate.getFullYear() === day.getFullYear() &&
+                        hour === task.hour
+                    );
+                });
+
+                const taskComps = dayTasks.map((task) => (
+                    <Task
+                        key={task.id}
+                        id={task.id}
+                        title={task.title}
+                        date={task.dueDate}
+                        hour={`${task.hour}:${String(task.minute).padStart(
+                            2,
+                            "0"
+                        )}`}
+                        priority={task.priority}
+                        status={task.status}
+                    />
+                ));
+
                 weekDays.push(
                     <View
                         key={`day-${day.getTime()}-hour-${hour}`}
-                        style={styles.weekday}></View>
+                        style={styles.weekday}>
+                        {taskComps}
+                    </View>
                 );
             }
         }
@@ -218,9 +294,36 @@ function Calendar() {
                     : hour === 12
                     ? "12 PM"
                     : `${hour - 12} PM`;
+
+            let dayTasks = tasks.filter((task) => {
+                const taskDate = new Date(task.dueDate);
+                return (
+                    taskDate.getDate() === day &&
+                    taskDate.getMonth() === month &&
+                    taskDate.getFullYear() === year &&
+                    hour === task.hour
+                );
+            });
+
+            const taskComps = dayTasks.map((task) => (
+                <Task
+                    key={task.id}
+                    id={task.id}
+                    title={task.title}
+                    date={task.dueDate}
+                    hour={`${task.hour}:${String(task.minute).padStart(
+                        2,
+                        "0"
+                    )}`}
+                    priority={task.priority}
+                    status={task.status}
+                />
+            ));
+
             hours.push(
                 <View key={`day-${day}-${hour}`} style={styles.dayHour}>
                     <Text style={styles.hourTxt}>{formattedHour}</Text>
+                    {taskComps}
                 </View>
             );
         }

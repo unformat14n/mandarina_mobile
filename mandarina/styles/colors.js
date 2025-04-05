@@ -47,4 +47,10 @@ export default {
         altPrimary: "#482dc1",
         altSecondary: "#425f50",
     },
+    lowp: "#73C98D",
+    lowpBg: "rgba(115, 201, 141, 0.1)",
+    medp: "#FFC919",
+    medpBg: "rgba(255, 201, 25, 0.1)",
+    highp: "#EC6E70",
+    highpBg: "rgba(236, 110, 112, 0.1)",
 };

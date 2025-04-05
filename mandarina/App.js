@@ -4,6 +4,7 @@ import AuthNavigator from "./navigation/AuthNavigator";
 import MainNavigator from "./navigation/AppNavigator";
 import { ThemeProvider } from "./context/ThemeContext";
 import axios from "axios"; // Import axios for making HTTP requests
+import UserProvider from "./context/UserContext";
 
 export default function App() {
     const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -25,14 +26,16 @@ export default function App() {
     }, []);
 
     return (
-        <ThemeProvider>
-            <NavigationContainer>
-                {isLoggedIn ? (
-                    <MainNavigator />
-                ) : (
-                    <AuthNavigator setIsLoggedIn={setIsLoggedIn} />
-                )}
-            </NavigationContainer>
-        </ThemeProvider>
+        <UserProvider>
+            <ThemeProvider>
+                <NavigationContainer>
+                    {isLoggedIn ? (
+                        <MainNavigator />
+                    ) : (
+                        <AuthNavigator setIsLoggedIn={setIsLoggedIn} />
+                    )}
+                </NavigationContainer>
+            </ThemeProvider>
+        </UserProvider>
     );
 }
