@@ -67,6 +67,7 @@ export const taskService = {
             const response = await api.post("/create-task", taskData);
             return response.data;
         } catch (error) {
+            console.log(error.response?.data)
             throw error.response?.data || { message: "Failed to create task" };
         }
     },

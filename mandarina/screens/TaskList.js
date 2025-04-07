@@ -1,13 +1,18 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, StyleSheet, Dimensions, ScrollView } from "react-native";
 import colors from "../styles/colors";
 import { PieChart } from "react-native-chart-kit";
 import { useTheme } from "../context/ThemeContext";
+import { TaskListItem } from "../components/Task";
+import { taskService } from "../services/api";
+import { useUser } from "../context/UserContext";
 
 function TaskList() {
     const { theme, palette } = useTheme();
     const styles = getStyles(theme, palette);
     const screenWidth = Dimensions.get("window").width;
+    const { userId } = useUser();
+    const [tasks, setTasks] = useState([]);
 
     const chartData = [
         {
@@ -42,6 +47,42 @@ function TaskList() {
         useShadowColorFromDataset: false,
     };
 
+    useEffect(() => {
+        const getTasksInMonth = async () => {
+            try {
+                const response = await taskService.getTasks(userId);
+
+                if (response.success) {
+                    setTasks(response.tasks);
+                } else {
+                    console.error("Error fetching tasks:", response.message);
+                }
+            } catch (error) {
+                console.error("Error fetching tasks:", error);
+            }
+        };
+
+        getTasksInMonth();
+    }, [userId, tasks]);
+
+    const renderTasks = () => {
+        if (tasks.length === 0) {
+            return <Text style={styles.taskHeaders}>No tasks found c:</Text>;
+        }
+        return tasks.map((task) => (
+            <TaskListItem
+                key={task.id}
+                id={task.id}
+                title={task.title}
+                date={task.dueDate}
+                hour={`${task.hour}:${String(task.minute).padStart(2, "0")}`}
+                priority={task.priority}
+                status={task.status}
+                description={task.description}
+            />
+        ));
+    };
+
     return (
         <View style={styles.container}>
             <Text style={styles.header}>Tasks</Text>
@@ -64,12 +105,7 @@ function TaskList() {
             <ScrollView style={styles.scrollContainer}>
                 <View style={styles.taskContainer}>
                     <Text style={styles.taskHeaders}>Your Recent Tasks:</Text>
-                    <Text> Something here </Text>
-                    <Text> Something here </Text>
-                    <Text> Something here </Text>
-                    <Text> Something here </Text>
-                    <Text> Something here </Text>
-                    <Text> Something here </Text>
+                    {renderTasks()}
                 </View>
             </ScrollView>
         </View>
@@ -155,7 +191,7 @@ const getStyles = (theme, palette) =>
             color: colors[palette].altSecondary,
             textAlign: "center",
             marginBottom: 10,
-        }
+        },
     });
 
 export default TaskList;

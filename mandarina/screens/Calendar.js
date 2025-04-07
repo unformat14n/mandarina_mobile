@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
     View,
     Text,
@@ -6,12 +6,16 @@ import {
     Dimensions,
     TouchableOpacity,
     ScrollView,
+    Modal,
+    Alert,
+    TextInput,
 } from "react-native";
 import colors from "../styles/colors";
 import { useTheme } from "../context/ThemeContext";
 import { useUser } from "../context/UserContext";
 import { taskService } from "../services/api";
 import Task from "../components/Task";
+import DateTimePicker from "@react-native-community/datetimepicker";
 
 const screenWidth = Dimensions.get("window").width;
 const screenHeight = Dimensions.get("window").height;
@@ -25,6 +29,79 @@ function Calendar() {
     const styles = getStyles(theme, palette);
     const { userId } = useUser();
     const [tasks, setTasks] = useState([]);
+    const [modalVisible, setModalVisible] = useState(false);
+    const [taskTitle, setTaskTitle] = useState("");
+    const [taskDescription, setTaskDescription] = useState("");
+    const [taskDueDate, setTaskDueDate] = useState(new Date());
+    const [taskPriority, setTaskPriority] = useState("Medium");
+    const [taskHour, setTaskHour] = useState(0);
+    const [taskMinute, setTaskMinute] = useState(0);
+
+    const [mode, setMode] = useState("date");
+    const [show, setShow] = useState(false);
+
+    const onChange = (event, selectedDate) => {
+        const currentDate = selectedDate || taskDueDate;
+        
+        if (mode === "time") {
+            // Update hour and minute states
+            setTaskHour(currentDate.getHours());
+            setTaskMinute(currentDate.getMinutes());
+        } else {
+            // For date changes, update the due date
+            setTaskDueDate(currentDate);1
+        }
+        setShow(false);
+    };
+
+    const showMode = (currentMode) => {
+        setShow(true);
+        setMode(currentMode);
+    };
+
+    const showDatepicker = () => {
+        showMode("date");
+    };
+
+    const showTimepicker = () => {
+        showMode("time");
+    };
+
+    const formatTimeForDisplay = (hours, minutes) => {
+        const period = hours >= 12 ? "PM" : "AM";
+        const displayHours = hours % 12 || 12; // Convert 0 to 12 for 12AM
+        return `${displayHours}:${String(minutes).padStart(2, "0")} ${period}`;
+    };
+
+    const handleAddTask = async () => {
+        try {
+            const response = await taskService.createTask({
+                title: taskTitle,
+                description: taskDescription,
+                dueDate:taskDueDate.toISOString().slice(0, 19).replace('T', ' '),
+                priority: taskPriority,
+                status: "Pending",
+                hour: taskHour,
+                minute: taskMinute,
+                userId: userId,
+            });
+
+            if (response.success) {
+                await getTasks();
+                setModalVisible(false);
+
+                setTaskTitle("");
+                setTaskDescription("");
+                setTaskDueDate(new Date());
+                setTaskPriority("Medium");
+                setTaskHour(0);
+                setTaskMinute(0);
+            }
+
+        } catch (error) {
+            Alert.alert("Error", error.response.data.message);
+        }
+    };
 
     const handleNext = () => {
         if (view == "month") {
@@ -77,10 +154,9 @@ function Calendar() {
         setCurDate(new Date());
     };
 
-    const getTasks = async () => {
+    const getTasks = useCallback(async () => {
         try {
             const response = await taskService.getTasks(userId);
-
             if (response.success) {
                 setTasks(response.tasks);
             } else {
@@ -89,11 +165,11 @@ function Calendar() {
         } catch (error) {
             console.error("Error fetching tasks:", error);
         }
-    };
+    }, [userId]);
 
     useEffect(() => {
         getTasks();
-    }, [tasks]);
+    }, [getTasks]);
 
     const getDaysInMonth = (year, month) => {
         return new Date(year, month + 1, 0).getDate();
@@ -367,7 +443,9 @@ function Calendar() {
                     <TouchableOpacity onPress={(e) => setView("day")}>
                         <Text style={styles.text}>Day</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.btn}>
+                    <TouchableOpacity
+                        style={styles.btn}
+                        onPress={() => setModalVisible(true)}>
                         <Text style={styles.buttonText}>Add Event</Text>
                     </TouchableOpacity>
                 </View>
@@ -402,6 +480,103 @@ function Calendar() {
                 {view == "week" && renderWeek()}
                 {view == "day" && renderDay()}
             </ScrollView>
+
+            <Modal
+                animationType="slide"
+                transparent={true}
+                visible={modalVisible}
+                onRequestClose={() => {
+                    setModalVisible(!modalVisible);
+                }}>
+                <View style={styles.centeredView}>
+                    <View style={styles.modalOverlay} />
+                    <View style={styles.modalView}>
+                        <Text style={styles.modalHeader}>Add New Task</Text>
+
+                        <Text style={styles.label}>Title</Text>
+                        <TextInput
+                            style={styles.input}
+                            placeholder="Task title"
+                            onChangeText={setTaskTitle}
+                            value={taskTitle}
+                        />
+
+                        <Text style={styles.label}>Description</Text>
+                        <TextInput
+                            style={[styles.input, styles.multilineInput]}
+                            placeholder="Task description"
+                            onChangeText={setTaskDescription}
+                            value={taskDescription}
+                            multiline
+                        />
+
+                        <Text style={styles.label}>Date</Text>
+                        <TouchableOpacity
+                            style={styles.input}
+                            onPress={showDatepicker}>
+                            <Text style={styles.datePickerText}>
+                                {taskDueDate.toLocaleDateString("default", {
+                                    month: "long",
+                                    day: "numeric",
+                                    year: "numeric",
+                                })}
+                            </Text>
+                        </TouchableOpacity>
+
+                        <Text style={styles.label}>Time</Text>
+                        <Text style={styles.label}>Time</Text>
+                        <TouchableOpacity
+                            style={styles.input}
+                            onPress={showTimepicker}>
+                            <Text style={styles.timeDisplay}>
+                                {formatTimeForDisplay(taskHour, taskMinute)}
+                            </Text>
+                        </TouchableOpacity>
+
+                        {show && (
+                            <DateTimePicker
+                                testID="dateTimePicker"
+                                value={taskDueDate}
+                                mode={mode}
+                                is24Hour={false}
+                                onChange={onChange}
+                            />
+                        )}
+
+                        <Text style={styles.label}>Priority</Text>
+                        <View style={styles.priorityContainer}>
+                            {["Low", "Medium", "High"].map((priority) => (
+                                <TouchableOpacity
+                                    key={priority}
+                                    style={[
+                                        styles.priorityButton,
+                                        taskPriority === priority &&
+                                            styles.selectedPriority,
+                                    ]}
+                                    onPress={() => setTaskPriority(priority)}>
+                                    <Text style={styles.priorityText}>
+                                        {priority}
+                                    </Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+
+                        <View style={styles.buttonContainer}>
+                            <TouchableOpacity
+                                style={[styles.button, styles.cancelButton]}
+                                onPress={() => setModalVisible(false)}>
+                                <Text style={styles.buttonText}>Cancel</Text>
+                            </TouchableOpacity>
+
+                            <TouchableOpacity
+                                style={[styles.button, styles.saveButton]}
+                                onPress={handleAddTask}>
+                                <Text style={styles.buttonText}>Save</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </View>
     );
 }
@@ -531,6 +706,114 @@ const getStyles = (curTheme, palette) =>
             color: colors[palette].secondary,
             fontWeight: "bold",
             textAlign: "center",
+        },
+
+        centeredView: {
+            flex: 1,
+            justifyContent: "center",
+            alignItems: "center",
+        },
+        modalOverlay: {
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            backgroundColor: "rgba(0,0,0,0.5)",
+        },
+        modalView: {
+            width: "90%",
+            backgroundColor: colors[curTheme].background,
+            borderRadius: 10,
+            padding: 20,
+            shadowColor: "#000",
+            shadowOffset: {
+                width: 0,
+                height: 2,
+            },
+            shadowOpacity: 0.25,
+            shadowRadius: 4,
+            elevation: 5,
+        },
+        modalHeader: {
+            fontSize: 20,
+            fontWeight: "bold",
+            marginBottom: 15,
+            color: colors[palette].secondary,
+            textAlign: "center",
+        },
+        label: {
+            marginTop: 10,
+            marginBottom: 5,
+            color: colors[curTheme].text,
+        },
+        input: {
+            borderWidth: 1,
+            borderColor: colors[curTheme].secondaryBg,
+            borderRadius: 5,
+            padding: 10,
+            marginBottom: 10,
+            color: colors[curTheme].text,
+        },
+        multilineInput: {
+            minHeight: 80,
+            textAlignVertical: "top",
+            color: colors[curTheme].text,
+        },
+        timeContainer: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+        },
+        timeInputContainer: {
+            width: "48%",
+        },
+        timeInput: {
+            borderWidth: 1,
+            borderColor: colors[curTheme].secondaryBg,
+            borderRadius: 5,
+            padding: 10,
+            color: colors[curTheme].text,
+        },
+        priorityContainer: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginBottom: 15,
+        },
+        priorityButton: {
+            padding: 10,
+            borderRadius: 5,
+            borderWidth: 1,
+            borderColor: colors[curTheme].secondaryBg,
+            width: "30%",
+            alignItems: "center",
+        },
+        selectedPriority: {
+            backgroundColor: colors[palette].primary,
+            borderColor: colors[palette].primary,
+            color: colors[curTheme].background,
+        },
+        priorityText: {
+            color: colors[curTheme].text,
+        },
+        buttonContainer: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+        },
+        button: {
+            padding: 10,
+            borderRadius: 5,
+            width: "48%",
+            alignItems: "center",
+        },
+        cancelButton: {
+            backgroundColor: colors[palette].altPrimary,
+        },
+        saveButton: {
+            backgroundColor: colors[palette].primary,
+        },
+        buttonText: {
+            color: colors[curTheme].background,
+            fontWeight: "bold",
         },
     });
 
